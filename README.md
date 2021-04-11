@@ -2,12 +2,20 @@
 
 Verify your Address by connecting it to your twitter account
 
-# Run the Adapter
+## Run the Adapter
 
 ```
 yarn start
 ```
 
+## Add Environment Variable
+
+Create a new .env file
+
+Add
+```
+TWITTER_API_BEARER_TOKEN=The Bearer Token for the API KEY
+```
 
 ## From Template by thodges-gh
 
