@@ -45,7 +45,7 @@ See [Install Locally](#install-locally) for a quickstart
 {
  "jobRunID": "278c97ffadb54a5bbb93cfec5f7b5503",
  "data": {
-  "result": "handle" // The handle that was found
+  "result": "handle"
  },
  "statusCode": 200
 }
