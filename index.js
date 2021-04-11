@@ -1,4 +1,5 @@
 const { Requester, Validator } = require('@chainlink/external-adapter')
+require('dotenv').config()
 
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
@@ -12,43 +13,46 @@ const customError = (data) => {
 // with a Boolean value indicating whether or not they
 // should be required.
 const customParams = {
-  base: ['base', 'from', 'coin'],
-  quote: ['quote', 'to', 'market'],
-  endpoint: false
+  tweetId: false
 }
 
 const createRequest = (input, callback) => {
   // The Validator helps you validate the Chainlink request data
   const validator = new Validator(callback, input, customParams)
   const jobRunID = validator.validated.id
-  const endpoint = validator.validated.data.endpoint || 'price'
-  const url = `https://min-api.cryptocompare.com/data/${endpoint}`
-  const fsym = validator.validated.data.base.toUpperCase()
-  const tsyms = validator.validated.data.quote.toUpperCase()
+  const tweetId = validator.validated.data.tweetId
 
-  const params = {
-    fsym,
-    tsyms
-  }
+  console.log('tweetId', tweetId)
 
   // This is where you would add method and headers
   // you can add method like GET or POST and add it to the config
   // The default is GET requests
-  // method = 'get' 
+  // method = 'get'
   // headers = 'headers.....'
   const config = {
-    url,
-    params
+    url: `https://api.twitter.com/2/tweets/${tweetId}?expansions=author_id`,
+    headers: {
+      Authorization: `Bearer ${process.env.TWITTER_API_BEARER_TOKEN}`
+    }
   }
 
-  // The Requester allows API calls be retry in case of timeout
-  // or connection failure
   Requester.request(config, customError)
     .then(response => {
-      // It's common practice to store the desired value at the top-level
-      // result key. This allows different adapters to be compatible with
-      // one another.
-      response.data.result = Requester.validateResultNumber(response.data, [tsyms])
+      const tweet = response.data
+      console.log('tweet', tweet)
+
+      // TODO
+      // Fetch signature from onChain
+      // const signature = getSignature(requestId)
+
+      // Verify signature is in tweet
+      // const found = signature.indexOf(tweet.text)
+
+      // Get user handle from tweet
+      const handle = String(tweet.includes.users[0].username).toLowerCase()
+      console.log('handle', handle)
+
+      response.data.result = handle
       callback(response.status, Requester.success(jobRunID, response))
     })
     .catch(error => {
