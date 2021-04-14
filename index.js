@@ -1,11 +1,36 @@
 const { Requester, Validator } = require('@chainlink/external-adapter')
 require('dotenv').config()
+const { verifyMessage } = require('@ethersproject/wallet')
+const { isAddress } = require('@ethersproject/address')
 
 // Define custom error scenarios for the API.
 // Return true for the adapter to retry.
 const customError = (data) => {
   if (data.Response === 'Error') return true
   return false
+}
+
+/** Library (Unit tested in monorepo)
+ * https://github.com/GalloDaSballo/aave-chainlink-euro
+*/
+const fromTweetToSignature = (tweet) => {
+  const text = tweet.data.text
+  const foundSignature = /(0x[A-Fa-f0-9]{130})/.exec(text)
+  if (!foundSignature[0]) {
+    throw new Error('No Signature in Tweet')
+  }
+  return foundSignature[0]
+}
+
+/**
+ * Given a signature and the message, returns the public address
+ * @param token
+ * @param message
+ * @returns
+ */
+const getAddress = (message, token) => {
+  const address = verifyMessage(message, token)
+  return address
 }
 
 // Define custom parameters to be used by the adapter.
@@ -41,18 +66,19 @@ const createRequest = (input, callback) => {
       const tweet = response.data
       console.log('tweet', tweet)
 
-      // TODO
-      // Fetch signature from onChain
-      // const signature = getSignature(requestId)
-
-      // Verify signature is in tweet
-      // const found = signature.indexOf(tweet.text)
+      const signature = fromTweetToSignature(tweet)
 
       // Get user handle from tweet
       const handle = String(tweet.includes.users[0].username).toLowerCase()
       console.log('handle', handle)
 
-      response.data.result = handle
+      const address = getAddress(handle, signature)
+      console.log('address', address)
+
+      const verified = isAddress(address)
+      console.log('verified', verified)
+
+      response.data.result = handle // TODO MAKE IT WORK
       callback(response.status, Requester.success(jobRunID, response))
     })
     .catch(error => {
