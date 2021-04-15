@@ -78,7 +78,11 @@ const createRequest = (input, callback) => {
       const verified = isAddress(address)
       console.log('verified', verified)
 
-      response.data.result = handle // TODO MAKE IT WORK
+      if (!verified) {
+        throw new Error('Signature Verification Failed')
+      }
+
+      response.data.result = handle
       callback(response.status, Requester.success(jobRunID, response))
     })
     .catch(error => {
